@@ -7,7 +7,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
 # Local Imports
-import DSTI_db_interface.dependency_installation as di # Works on import
+import DSTI_db_interface.dependency_installation as di
 
 # Install any missing dependencies
 di.install_dependencies()

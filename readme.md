@@ -22,3 +22,25 @@ Necessary dependencies are installed automatically **into current the python ins
 - Add the necessary configuration details in to config.ini. **Access to the contents of this file must be restricted**.
 
 - The details of which configuration parameters are necessary are in the config_defailt.ini file. **The config_default.ini file should be used as a template for your config.ini file**.
+
+
+___
+
+# Project Restrictions
+
+- Only use SELECT queries on DB tables
+- Only create or alter views
+- Provide an always fresh alternative using Python3 without using SQL functions or triggers on teh database server
+
+# Project Implementation Requirements
+
+1. Gracefully handle the connection to the database server.
+2. Replicate the algorithm of the dbo.fn_GetAllSurveyDataSQL stored function.
+3. Replicate the algorithm of the trigger dbo.trg_refreshSurveyView for
+creating/altering the view vw_AllSurveyData whenever applicable.
+4. For achieving (3) above, a persistence component (in any format you like: CSV, XML,
+JSON, etc.), storing the last known surveys’ structures should be in place. It is not
+acceptable to just recreate the view every time: the trigger behaviour must be
+replicated.
+5. Of course, extract the “always-fresh” pivoted survey data, in a CSV file, adequately
+named.

@@ -3,11 +3,13 @@ import os
 import subprocess
 import sys
 
+
 # Add project root to sys.path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
 # Local Imports
 import DSTI_db_interface.dependency_installation as di
+import DSTI_db_interface.db_api as db_api
 
 # Install any missing dependencies
 di.install_dependencies()

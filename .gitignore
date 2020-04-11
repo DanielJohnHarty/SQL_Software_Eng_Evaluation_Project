@@ -2,6 +2,7 @@
 *config.ini
 *Survey_Sample_A19.zip
 *.vscode*
+*SupportingFiles/Survey_Sample_A19.bak
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -9,7 +9,41 @@ import pandas as pd
 import pyodbc
 
 
+class NonPermittedQuery(Exception):
+    def __init__(self, *args):
+        if args:
+            self.message = args[0]
+        else:
+            self.message = None
+
+    def __str__(self):
+        #print('calling str')
+        if self.message:
+            return 'NonPermittedQuery, {0} '.format(self.message)
+        else:
+            return 'NonPermittedQuery has been raised'
+
 CONN = get_db_connection()
+
+def is_permitted_query(sql_query):
+    qry = sql_query.lower()
+    select_only_qry = not any(
+        [name in qry for name in ('update','drop','delete', 'create')]
+    )
+    non_empty_qry = qry is not None and qry != ''
+    permitted_qry = select_only_qry and non_empty_qry
+    return permitted_qry
+
+def run_sql_select_query(sql_query, connection=CONN):
+    """
+    Runs passed query against database using CONN object
+    """
+
+    if not is_permitted_query(sql_query):
+        raise NonPermittedQuery
+    else:
+        df = pd.read_sql(query, connection)
+        return df
 
 
 def get_all_survey_data(survey_id):

@@ -4,7 +4,7 @@ import subprocess
 import sys
 
 
-def install_dependencies(requirements_txt_path="requirements.txt") -> None:
+def install_dependencies() -> None:
     """
     Use the local environment Python executables pip
     to install all dependencies in the requirement.txt file.

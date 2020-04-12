@@ -8,7 +8,7 @@ import os
 # External library imports
 import pyodbc
 
-
+# EXCEPTIONS
 class DBConnectionFailed(Exception):
     def __init__(self, *args):
         if args:
@@ -24,6 +24,7 @@ class DBConnectionFailed(Exception):
                     config.ini at the root of the project are present
                     and correct, and that the databse is running."""
 
+# DECORATORS
 def provide_db_connection(func):
     """
     Decorator which creates aq db connection object
@@ -41,6 +42,7 @@ def provide_db_connection(func):
     return wrapper_provide_db_connection
 
 
+# FUNCTIONS
 def get_db_connection_string() -> str:
     """
     Builds a database connection string using the configuration

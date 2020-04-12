@@ -26,11 +26,8 @@ class NonPermittedQuery(Exception):
             return "NonPermittedQuery has been raised"
 
 
-#CONN = get_db_connection()
-
-
 CHECKPOINT_PATH = os.path.join(
-    os.path.join(os.path.dirname(__file__)), "data", "survey_data_last_checkpoint.csv"
+    os.path.join(os.path.dirname(__file__)), "data", "survey_data_last_checkpoint.txt"
 )
 
 AllSurveyData_QRY = """
@@ -116,17 +113,15 @@ AllSurveyData_QRY = """
 """
 
 create_vw_AllSurveyData_qry = f"""
-                CREATE   VIEW [dbo].[vw_AllSurveyData] AS 
+                CREATE VIEW [dbo].[vw_AllSurveyData] AS 
                     {AllSurveyData_QRY}
 """
-
-
 
 
 def is_permitted_query(sql_query):
     qry = sql_query.lower()
     select_only_qry = not any(
-        [name in qry for name in ('update', 'drop', 'delete', 'create', 'alter')]
+        [name in qry for name in ("update", "drop", "delete", "create", "alter")]
     )
     non_empty_qry = qry is not None and qry != ""
     permitted_qry = select_only_qry and non_empty_qry
@@ -146,56 +141,64 @@ def run_sql_select_query(sql_query=None, connection=None):
             return df
 
 
-def checkpoint_file_exists():
+def get_checkpoint_hash():
+    """
+    Reads the hash string in the CHECKPOINT_PATH
+    and returns it to the caller.
+
+    If the CHECKPOINT_PATH doesn't exist, a blank file is 
+    created and None is returned.
     """
 
-    """
-
+    checkpoint_hash = None
+    # If CHECKPOINT_PATH doesn't exist, it's probably
+    # the first time the code has run
     if not os.path.exists(CHECKPOINT_PATH):
-        print(
-            f"No checkpoint file exists at {CHECKPOINT_PATH}.\nAssuming first execution..."
-        )
-        return False
+        with open(CHECKPOINT_PATH, "w") as file:
+            # Only create file, don't write anything
+            pass
     else:
-        return True
+        with open(CHECKPOINT_PATH, "r") as file:
+            checkpoint_hash = file.read()
+
+    return checkpoint_hash
 
 
-def run_maintenence_on_vw_AllSurveyData(live_survey_data):
+def update_vw_AllSurveyData_if_obsolete(live_survey_data: pd.DataFrame) -> bool:
     """
-
+    Returns True is the data in the view vw_AllSurveyData
+    is different to that taken from the live tables
     """
-
-    checkpoint_exists = checkpoint_file_exists()
+    checkpoint_hash = get_checkpoint_hash()
     live_survey_data_hash = get_dataframe_hash_id(live_survey_data)
 
-    if checkpoint_exists:
-        # Does the checkpoint hash match the current data hash
-        survey_data_last_checkpoint = pd.read_csv(CHECKPOINT_PATH)
-        survey_data_last_checkpoint_hash = get_dataframe_hash_id(
-            survey_data_last_checkpoint
-        )
+    # vw_AllSurveyData must be updated if obsolete
+    obsolete = checkpoint_hash and (live_survey_data_hash != checkpoint_hash)
 
-        update_required = live_survey_data_hash != survey_data_last_checkpoint_hash
-
-    if not checkpoint_exists:
-        # We update the view just in case and better make a checkpoint file
+    if obsolete or not checkpoint_hash:
         drop_vw_AllSurveyData()
         create_vw_AllSurveyData()
-        live_survey_data.to_csv(CHECKPOINT_PATH)
-        print("First checkpoint created: {live_survey_data_hash}")
+        # Record new checkpoint_hash
+        persist_checkpoint_hash(live_survey_data_hash)
 
-    if checkpoint_exists and update_required:
-        # We better update the view and replace the checkpoint
-        drop_vw_AllSurveyData()
-        create_vw_AllSurveyData()
-        live_survey_data.to_csv(CHECKPOINT_PATH)
+    if obsolete:
         print(
-            "New survey data checkpoint created from {survey_data_last_checkpoint_hash} to {live_survey_data_hash}"
+            f"vw_AllSurveyData data obsolete. Updating checkpoint: {checkpoint_hash} -> {live_survey_data_hash}"
+        )
+    elif not checkpoint_hash:
+        print(
+            f"First checkpoint recorded using current vw_AllSurveyData data: {live_survey_data}"
+        )
+    elif not obsolete:
+        print(
+            f"No update to vw_AllSurveyData necessary. Existing checkpoint remains: {checkpoint_hash}"
         )
 
-    if checkpoint_exists and not update_required:
-        # No changes necessary. View doesn't change and checkpoint can be left as is
-        pass
+
+def persist_checkpoint_hash(live_survey_data_hash):
+    # Record new checkpoint_hash
+    with open(CHECKPOINT_PATH, "w") as file:
+        file.write(live_survey_data_hash)
 
 
 def get_all_survey_data() -> pd.DataFrame:
@@ -204,9 +207,10 @@ def get_all_survey_data() -> pd.DataFrame:
     """
     live_survey_data = run_sql_select_query(f"{AllSurveyData_QRY} ORDER BY UserId")
 
-    run_maintenence_on_vw_AllSurveyData(live_survey_data)
+    update_vw_AllSurveyData_if_obsolete(live_survey_data)
 
     return live_survey_data
+
 
 def get_dataframe_hash_id(df: pd.DataFrame) -> str:
     """
@@ -230,7 +234,8 @@ def drop_vw_AllSurveyData(connection=None):
     and closes it after the function completes
     """
     qry = "DROP VIEW [dbo].[vw_AllSurveyData]"
-    cur = CONN.execute(qry)
+    cur = connection.execute(qry)
+    cur.commit()
     cur.close()
 
 
@@ -240,7 +245,8 @@ def create_vw_AllSurveyData(connection=None):
     @provide_db_connection provides db connection object
     and closes it after the function completes
     """
-    cur = CONN.execute(create_vw_AllSurveyData_qry)
+    cur = connection.execute(create_vw_AllSurveyData_qry)
+    cur.commit()
     cur.close()
 
 

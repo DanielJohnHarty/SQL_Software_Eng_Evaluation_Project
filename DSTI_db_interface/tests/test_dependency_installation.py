@@ -1,5 +1,6 @@
 # Standard Library Imports
 import os
+import subprocess
 import sys
 
 PROJECT_ROOT = \
@@ -9,4 +10,28 @@ PROJECT_ROOT = \
 sys.path.insert(0, PROJECT_ROOT)
 
 # Local Imports
-import DSTI_db_interface.db_connection as dbconn
+# Import part of test
+#import DSTI_db_interface.dependency_installation as di
+
+
+def test_install_dependencies_as_import():
+    """
+    Test that when module is imported, dependency
+    installation deosn't raise an exception
+    """
+    # Local Imports
+    import DSTI_db_interface.dependency_installation as di
+
+def test_install_dependencies_as_script():
+    """
+    Test that when module is imported, dependency
+    installation deosn't raise an exception
+    """
+    run_as_script_pth = os.path.join(PROJECT_ROOT, '__init__.py')
+    
+    subprocess.check_call(
+        [sys.executable, run_as_script_pth]
+    )
+
+test_install_dependencies_as_script()
+

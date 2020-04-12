@@ -1,11 +1,30 @@
 # Standard library imports
 import configparser
+import functools
 import os
 
 # Local Imports
 
 # External library imports
 import pyodbc
+
+
+def provide_db_connection(func):
+    """
+    Decorator which creates aq db connection object
+    and passes it to the decorated function which
+    uses it to connect with the db.
+
+    After the decorated function is complete, the connection is closed.
+    """
+    @functools.wraps(func)
+    def wrapper_provide_db_connection(*args, **kwargs):
+        connection = get_db_connection()
+        function_return = func(*args, **kwargs, connection=connection)
+        connection.close()
+        return function_return
+    return wrapper_provide_db_connection
+
 
 def get_db_connection_string() -> str:
     """

@@ -44,3 +44,13 @@ acceptable to just recreate the view every time: the trigger behaviour must be
 replicated.
 5. Of course, extract the “always-fresh” pivoted survey data, in a CSV file, adequately
 named.
+
+
+# Running Tests
+
+At the project root, ensure you have **pytest** installed and run the command:
+
+```
+pytest -v -s
+```
+

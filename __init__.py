@@ -1,4 +1,4 @@
-#Standard Library Imports
+# Standard Library Imports
 import os
 import subprocess
 import sys
@@ -17,11 +17,11 @@ import DSTI_db_interface.queries_and_dynamic_queries as queries_and_dynamic_quer
 dependency_installation.install_dependencies()
 
 
-PROJECT_NAME = 'DSTI_db_interface'
+PROJECT_NAME = "DSTI_db_interface"
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # Run main.py
-    main_file_pth = os.path.join(os.path.dirname(__file__), PROJECT_NAME,'main.py')
+    main_file_pth = os.path.join(os.path.dirname(__file__), PROJECT_NAME, "main.py")
 
-    subprocess.check_call([sys.executable,  main_file_pth])
+    subprocess.check_call([sys.executable, main_file_pth])

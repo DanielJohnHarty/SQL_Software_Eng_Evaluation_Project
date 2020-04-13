@@ -51,20 +51,10 @@ def test_dynamic_query_returns_string(func, parameters):
     assert expected == actual
 
 
-# def test_get_num_surveys_returns_integer():
-#     """
-#     Test fails if get_num_surveys functions
-#     returns anything other than an integer
-#     """
-#     num_surveys = q.get_num_surveys()
-#     assert isinstance(num_surveys, int)
+functions_returning_lists = [(q.get_survey_ids), (q.get_question_ids)]
 
-functions_returning_lists = [
-    (q.get_survey_ids),
-    (q.get_question_ids)
-]
+
 @pytest.mark.parametrize("func", functions_returning_lists)
 def test_get_survey_ids_returns_list(func):
     returned_object = func()
     assert isinstance(returned_object, list)
-

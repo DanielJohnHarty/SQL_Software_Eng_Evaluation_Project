@@ -51,7 +51,6 @@ def test_NonPermittedQuery_status(qry, is_permitted):
     assert expected == actual
 
 
-
 @provide_db_connection
 def test_run_sql_select_query_returns_df(connection=None):
     """

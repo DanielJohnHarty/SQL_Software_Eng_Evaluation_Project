@@ -24,6 +24,7 @@ class DBConnectionFailed(Exception):
                     config.ini at the root of the project are present
                     and correct, and that the databse is running."""
 
+
 # DECORATORS
 def provide_db_connection(func):
     """
@@ -33,12 +34,14 @@ def provide_db_connection(func):
 
     After the decorated function is complete, the connection is closed.
     """
+
     @functools.wraps(func)
     def wrapper_provide_db_connection(*args, **kwargs):
         connection = get_db_connection()
         function_return = func(*args, **kwargs, connection=connection)
         connection.close()
         return function_return
+
     return wrapper_provide_db_connection
 
 
@@ -49,7 +52,9 @@ def get_db_connection_string() -> str:
     parameters in config.txt.
     """
     try:
-        config_file_pth = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.ini")
+        config_file_pth = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), "config.ini"
+        )
         config = configparser.ConfigParser()
         config.read(config_file_pth)
 
@@ -75,4 +80,3 @@ def get_db_connection():
     except Exception as e:
         raise DBConnectionFailed
     return sql_conn
-

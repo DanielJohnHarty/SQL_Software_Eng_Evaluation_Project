@@ -30,25 +30,22 @@ class NonPermittedQuery(Exception):
 # SHARED VARIABLES
 
 CHECKPOINT_PATH = os.path.join(
-    os.path.join(os.path.dirname(__file__)), "data", "survey_data_last_checkpoint.txt",
+    os.path.join(os.path.dirname(__file__)), "data", "survey_data_last_checkpoint.txt"
 )
 
 
 # FUNCTIONS
-def is_permitted_query(qry:str)-> bool:
+def is_permitted_query(qry: str) -> bool:
     """
     Returns False if any flag from the 
     non_permitted_query_flags iterable are present
     in the passed query
     """
-    non_permitted_query_flags = \
-        ("update", "drop", "delete", "create", "alter")
+    non_permitted_query_flags = ("update", "drop", "delete", "create", "alter")
 
     qry = qry.lower()
 
-    no_flags = not any(
-        [name in qry for name in non_permitted_query_flags]
-    )
+    no_flags = not any([name in qry for name in non_permitted_query_flags])
 
     non_empty_qry = qry is not None and qry != ""
     permitted_qry = no_flags and non_empty_qry
@@ -56,7 +53,7 @@ def is_permitted_query(qry:str)-> bool:
 
 
 @provide_db_connection
-def run_sql_select_query(sql_query=None, connection=None)->pd.DataFrame:
+def run_sql_select_query(sql_query=None, connection=None) -> pd.DataFrame:
     """
     Runs passed query against database using connection object.
     It will not run any destructive or modicative qry,
@@ -109,7 +106,7 @@ def get_checkpoint_hash():
     return checkpoint_hash
 
 
-def update_vw_AllSurveyData_if_obsolete(live_survey_data: pd.DataFrame=None) -> bool:
+def update_vw_AllSurveyData_if_obsolete(live_survey_data: pd.DataFrame = None) -> bool:
     """
     live_survey_data is the result of
      a call to get_all_survey_data()
@@ -142,7 +139,7 @@ def update_vw_AllSurveyData_if_obsolete(live_survey_data: pd.DataFrame=None) -> 
     stdout_vw_AllSurveyData_actions(obsolete, checkpoint_hash, live_survey_data_hash)
 
 
-def stdout_vw_AllSurveyData_actions(obsolete, checkpoint_hash,live_survey_data_hash):
+def stdout_vw_AllSurveyData_actions(obsolete, checkpoint_hash, live_survey_data_hash):
     if obsolete:
         print(
             f"vw_AllSurveyData data obsolete. Updating checkpoint: {checkpoint_hash} -> {live_survey_data_hash}"
@@ -182,19 +179,15 @@ def get_all_survey_data(update_view=True) -> pd.DataFrame:
     # Latest data from live DB tables
     qry = get_dynamic_query_to_update_vw_AllSurveyData()
 
-    # ORDER BY essential to ensure same hash even if 
+    # ORDER BY essential to ensure same hash even if
     # the order of the result set is different
-    live_survey_data = \
-        run_sql_select_query(f"{qry} ORDER BY UserId")
+    live_survey_data = run_sql_select_query(f"{qry} ORDER BY UserId")
 
     if update_view:
         update_vw_AllSurveyData_if_obsolete(live_survey_data=live_survey_data)
 
     # Return result as a Pandas DataFrame
     return live_survey_data
-
-
-
 
 
 def get_dataframe_hash_id(df: pd.DataFrame) -> str:
@@ -234,4 +227,3 @@ def create_vw_AllSurveyData(connection=None):
     cur = connection.execute(qry)
     cur.commit()
     cur.close()
-

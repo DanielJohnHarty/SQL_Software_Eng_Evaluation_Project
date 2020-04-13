@@ -9,6 +9,7 @@ run_sql_select_query(your_select_query_string)
 update_vw_AllSurveyData_if_obsolete(live_survey_data=None) -> If live_survey_data is None, the latest will be queried from the db using get_all_survey_data
 
 
+
 # Project Scope
 
 To create an application written in Python3 to facilitate data consumers to a specific 'always-fresh' view on live production data. Project restrictions apply.

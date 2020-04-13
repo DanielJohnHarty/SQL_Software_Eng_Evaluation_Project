@@ -29,7 +29,8 @@ class DynamicQueryMissingParameters(Exception):
 
 # DYNAMIC QUERY FUNCTIONS
 
-def get_strQueryTemplateForAnswerColumn(survey_id=None, question_id=None)-> str:
+
+def get_strQueryTemplateForAnswerColumn(survey_id=None, question_id=None) -> str:
     """
     Builds and returns an SQL query string using the passed parameters.
 
@@ -51,7 +52,8 @@ def get_strQueryTemplateForAnswerColumn(survey_id=None, question_id=None)-> str:
 				), -1) AS ANS_Q{question_id}
             """
 
-def get_strQueryTemplateForNullColumn(question_id=None)-> str:
+
+def get_strQueryTemplateForNullColumn(question_id=None) -> str:
     """
     Builds and returns an SQL query string using the passed parameters.
 
@@ -66,7 +68,9 @@ def get_strQueryTemplateForNullColumn(question_id=None)-> str:
             """
 
 
-def get_strQueryTemplateOuterUnionQuery(survey_id=None, dynamic_question_answers=None)-> str:
+def get_strQueryTemplateOuterUnionQuery(
+    survey_id=None, dynamic_question_answers=None
+) -> str:
     """
     Builds and returns an SQL query string 
     using the passed parameters.
@@ -93,22 +97,23 @@ def get_strQueryTemplateOuterUnionQuery(survey_id=None, dynamic_question_answers
 
 
 @provide_db_connection
-def get_survey_ids(connection=None)->list:
-    qry = 'SELECT SurveyId FROM Survey ORDER BY SurveyId'
+def get_survey_ids(connection=None) -> list:
+    qry = "SELECT SurveyId FROM Survey ORDER BY SurveyId"
     surveyIds = db.run_sql_select_query(qry)
-    surveyIds_as_list = surveyIds['SurveyId'].to_list()
+    surveyIds_as_list = surveyIds["SurveyId"].to_list()
     return surveyIds_as_list
 
 
 @provide_db_connection
-def get_question_ids(connection=None)->list:
-    qry = 'SELECT QuestionId FROM Question ORDER BY QuestionId'
+def get_question_ids(connection=None) -> list:
+    qry = "SELECT QuestionId FROM Question ORDER BY QuestionId"
     questionIds = db.run_sql_select_query(qry)
-    questionIds_as_list = questionIds['QuestionId'].to_list()
+    questionIds_as_list = questionIds["QuestionId"].to_list()
     return questionIds_as_list
 
+
 # currentQuestionCursor
-def get_questions_in_survey_qry(survey_id=None)->str:
+def get_questions_in_survey_qry(survey_id=None) -> str:
     """
     Builds and returns an SQL query string
     using the passed parameters.
@@ -119,7 +124,7 @@ def get_questions_in_survey_qry(survey_id=None)->str:
     if not survey_id:
         raise DynamicQueryMissingParameters
 
-    return    f"""SELECT *
+    return f"""SELECT *
                 FROM
                 (
                     SELECT
@@ -147,8 +152,7 @@ def get_questions_in_survey_qry(survey_id=None)->str:
                 ORDER BY QuestionId"""
 
 
-
-def get_dynamic_query_to_update_vw_AllSurveyData()->str:
+def get_dynamic_query_to_update_vw_AllSurveyData() -> str:
     """
     This function build a dynamic query string, based on
     the contents of live database tables.
@@ -168,25 +172,25 @@ def get_dynamic_query_to_update_vw_AllSurveyData()->str:
 
     """
 
-    # Appended to during the function 
+    # Appended to during the function
     # and finally returned to caller
-    wip_query = ''
-    
+    wip_query = ""
+
     # The latest set of all surveys from
     # the Survey table
     all_survey_ids = get_survey_ids()
 
     # OUTER LOOP
     for survey_id in all_survey_ids:
-        
+
         # New questions and answers may have been
         # added to the live databse tables so
         # we create a dynamic string to append
         # a column for each question with a value of
-        # NULL (question not in survey), 
-        # -1 (question not answered) or the recorded answer 
-        answer_columns_qry = ''
-            
+        # NULL (question not in survey),
+        # -1 (question not answered) or the recorded answer
+        answer_columns_qry = ""
+
         # INNER LOOP
         """
         Iterate over questions, adding
@@ -212,25 +216,23 @@ def get_dynamic_query_to_update_vw_AllSurveyData()->str:
             question_id = row.QuestionId
             if row.InSurvey == 0:
                 # Question not in survey so add NULL as column
-                answer_columns_qry += \
-                    get_strQueryTemplateForNullColumn(question_id)
+                answer_columns_qry += get_strQueryTemplateForNullColumn(question_id)
 
             else:
-                # Question is in survey so add the 
+                # Question is in survey so add the
                 # value based on the users answer
-                answer_columns_qry += \
-                    get_strQueryTemplateForAnswerColumn(survey_id, question_id)
+                answer_columns_qry += get_strQueryTemplateForAnswerColumn(
+                    survey_id, question_id
+                )
 
-        # Before moving on to next survey, add 
+        # Before moving on to next survey, add
         # this survey to the final query string
-        current_survey_select_qry = \
-            get_strQueryTemplateOuterUnionQuery(
-                survey_id=survey_id,
-                dynamic_question_answers=answer_columns_qry
-            )
-        
+        current_survey_select_qry = get_strQueryTemplateOuterUnionQuery(
+            survey_id=survey_id, dynamic_question_answers=answer_columns_qry
+        )
+
         wip_query += f"{current_survey_select_qry} UNION "
-    
+
     # Remove final unecessary ' UNION '
     final_query_string = wip_query[:-7]
 
@@ -238,12 +240,8 @@ def get_dynamic_query_to_update_vw_AllSurveyData()->str:
 
 
 def get_questions_in_survey(survey_id) -> pd.DataFrame:
-    questions_in_survey_qry = \
-        get_questions_in_survey_qry(survey_id)
+    questions_in_survey_qry = get_questions_in_survey_qry(survey_id)
 
     questions_in_survey = db.run_sql_select_query(questions_in_survey_qry)
 
     return questions_in_survey
-
-
-

@@ -56,11 +56,15 @@ def is_permitted_query(qry:str)-> bool:
 
 
 @provide_db_connection
-def run_sql_select_query(sql_query=None, connection=None):
+def run_sql_select_query(sql_query=None, connection=None)->pd.DataFrame:
     """
     Runs passed query against database using connection object.
+    It will not run any destructive or modicative qry,
+    instead raising a NonPermittedQuery exception.
 
     @provide_db_connection provides the connection object.
+
+    Returns a pandas dataframe.
     """
     if not is_permitted_query(sql_query):
         raise NonPermittedQuery
@@ -105,17 +109,22 @@ def get_checkpoint_hash():
     return checkpoint_hash
 
 
-def update_vw_AllSurveyData_if_obsolete(live_survey_data: pd.DataFrame) -> bool:
+def update_vw_AllSurveyData_if_obsolete(live_survey_data: pd.DataFrame=None) -> bool:
     """
-    live_survey_data is a dataframe
-    containing the results of the query
-    'SELECT * from vw_AllSurveyData'.
-    
-    This function compares the hash of this df
-    with that stored in a local checkpoint file,
-    and takes the necessary actions to update 
-    vw_AllSurveyData if it is obsolete.
+    live_survey_data is the result of
+     a call to get_all_survey_data()
+
+    This function compares the hash the
+    last dataset (stored in a checkpoint file locally)
+    to the latest. 
+
+    In case of any difference, a new checkpoint is created
+    and the view is updated.
     """
+
+    if live_survey_data is None:
+        live_survey_data = get_all_survey_data(update_view=False)
+
     checkpoint_hash = get_checkpoint_hash()
     live_survey_data_hash = get_dataframe_hash_id(live_survey_data)
 
@@ -130,17 +139,17 @@ def update_vw_AllSurveyData_if_obsolete(live_survey_data: pd.DataFrame) -> bool:
         persist_checkpoint_hash(live_survey_data_hash)
 
     # Print action taken for the user to conveniently see
-    stdout_vw_AllSurveyData_actions(obsolete, checkpoint_hash)
+    stdout_vw_AllSurveyData_actions(obsolete, checkpoint_hash, live_survey_data_hash)
 
 
-def stdout_vw_AllSurveyData_actions(obsolete, checkpoint_hash):
+def stdout_vw_AllSurveyData_actions(obsolete, checkpoint_hash,live_survey_data_hash):
     if obsolete:
         print(
             f"vw_AllSurveyData data obsolete. Updating checkpoint: {checkpoint_hash} -> {live_survey_data_hash}"
         )
     elif not checkpoint_hash:
         print(
-            f"First checkpoint recorded using current vw_AllSurveyData data: {live_survey_data}"
+            f"First checkpoint recorded using current vw_AllSurveyData data: {live_survey_data_hash}"
         )
     elif not obsolete:
         print(
@@ -162,26 +171,30 @@ def persist_checkpoint_hash(live_survey_data_hash):
         file.write(live_survey_data_hash)
 
 
-def get_all_survey_data() -> pd.DataFrame:
+def get_all_survey_data(update_view=True) -> pd.DataFrame:
     """
     Querys database and for specific result set
-    AllSurveyData and initiates code to check for
-    obsolecence of data in the vw_AllSurveyData view.
+    AllSurveyData.
+
+    By default, vw_AllSurveyData is updated but can be
+    skipped with update_view=False.
     """
     # Latest data from live DB tables
     qry = get_dynamic_query_to_update_vw_AllSurveyData()
 
     # ORDER BY essential to ensure same hash even if 
-    # the order of teh result set is different
+    # the order of the result set is different
     live_survey_data = \
         run_sql_select_query(f"{qry} ORDER BY UserId")
 
-    # Run code to check if the last time this was ran, if the 
-    # data has changed. If yes, the vw_AllSurveyData is updated.
-    update_vw_AllSurveyData_if_obsolete(live_survey_data)
+    if update_view:
+        update_vw_AllSurveyData_if_obsolete(live_survey_data=live_survey_data)
 
     # Return result as a Pandas DataFrame
     return live_survey_data
+
+
+
 
 
 def get_dataframe_hash_id(df: pd.DataFrame) -> str:
@@ -205,7 +218,7 @@ def drop_vw_AllSurveyData(connection=None):
     @provide_db_connection provides db connection object
     and closes it after the function completes
     """
-    qry = "DROP VIEW [dbo].[vw_AllSurveyData]"
+    qry = "DROP VIEW IF EXISTS [dbo].[vw_AllSurveyData]"
     cur = connection.execute(qry)
     cur.commit()
     cur.close()

@@ -26,93 +26,6 @@ class DynamicQueryMissingParameters(Exception):
                    have unexpected results and cause unecessary
                    storage and performance costs."""
 
-# QUERIES
-AllSurveyData_QRY = """
-
-                            SELECT
-                                    UserId
-                                    , 1 as SurveyId
-                                    , 
-                            COALESCE(
-                                (
-                                    SELECT a.Answer_Value
-                                    FROM Answer as a
-                                    WHERE
-                                        a.UserId = u.UserId
-                                        AND a.SurveyId = 1
-                                        AND a.QuestionId = 1
-                                ), -1) AS ANS_Q1  , 
-                            COALESCE(
-                                (
-                                    SELECT a.Answer_Value
-                                    FROM Answer as a
-                                    WHERE
-                                        a.UserId = u.UserId
-                                        AND a.SurveyId = 1
-                                        AND a.QuestionId = 2
-                                ), -1) AS ANS_Q2  ,  NULL AS ANS_Q3  ,  NULL AS ANS_Q4 
-                            FROM
-                                [User] as u
-                            WHERE EXISTS
-                            (
-                                    SELECT *
-                                    FROM Answer as a
-                                    WHERE u.UserId = a.UserId
-                                    AND a.SurveyId = 1
-                            )
-                            UNION 
-                            SELECT
-                                    UserId
-                                    , 2 as SurveyId
-                                    ,  NULL AS ANS_Q1  , 
-                            COALESCE(
-                                (
-                                    SELECT a.Answer_Value
-                                    FROM Answer as a
-                                    WHERE
-                                        a.UserId = u.UserId
-                                        AND a.SurveyId = 2
-                                        AND a.QuestionId = 2
-                                ), -1) AS ANS_Q2  , 
-                            COALESCE(
-                                (
-                                    SELECT a.Answer_Value
-                                    FROM Answer as a
-                                    WHERE
-                                        a.UserId = u.UserId
-                                        AND a.SurveyId = 2
-                                        AND a.QuestionId = 3
-                                ), -1) AS ANS_Q3  ,  NULL AS ANS_Q4 
-                            FROM
-                                [User] as u
-                            WHERE EXISTS
-                            (
-                                    SELECT *
-                                    FROM Answer as a
-                                    WHERE u.UserId = a.UserId
-                                    AND a.SurveyId = 2
-                            )
-                            UNION 
-                            SELECT
-                                    UserId
-                                    , 3 as SurveyId
-                                    ,  NULL AS ANS_Q1  ,  NULL AS ANS_Q2  ,  NULL AS ANS_Q3  ,  NULL AS ANS_Q4 
-                            FROM
-                                [User] as u
-                            WHERE EXISTS
-                            (
-                                    SELECT *
-                                    FROM Answer as a
-                                    WHERE u.UserId = a.UserId
-                                    AND a.SurveyId = 3
-                            )
-                                
-"""
-
-create_vw_AllSurveyData_qry = f"""
-                CREATE VIEW [dbo].[vw_AllSurveyData] AS 
-                    {AllSurveyData_QRY}
-"""
 
 # DYNAMIC QUERY FUNCTIONS
 
@@ -177,14 +90,6 @@ def get_strQueryTemplateOuterUnionQuery(survey_id=None, dynamic_question_answers
 					WHERE u.UserId = a.UserId
 					AND a.SurveyId = {survey_id} 
 			)"""
-
-
-# @provide_db_connection
-# def get_num_surveys(connection=None)->int:
-#     qry = 'select count(*) FROM Survey'
-#     num_surveys_as_df = db.run_sql_select_query(qry)
-#     num_surveys_as_int = int(num_surveys_as_df.values[0][0])
-#     return num_surveys_as_int
 
 
 @provide_db_connection

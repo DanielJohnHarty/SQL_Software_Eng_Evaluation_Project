@@ -58,7 +58,8 @@ def test_run_sql_select_query_returns_df(connection=None):
     @provide_db_connection provides the connection object
     and closes it after the function call is complete
     """
-    table = "[dbo].[vw_AllSurveyData]"
+
+    table = "[dbo].[User]"
     qry = f"SELECT * FROM {table}"
 
     df = pd.read_sql(qry, connection)

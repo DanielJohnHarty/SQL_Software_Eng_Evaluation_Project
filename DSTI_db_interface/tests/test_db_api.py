@@ -15,11 +15,11 @@ from DSTI_db_interface.db_connection import provide_db_connection
 import pandas as pd
 import pytest
 
+# SHARED_VARIABLES
 DF_1 = pd.DataFrame({"A": 1, "B": 2, "C": 3}, index=(1, 2, 3))
 DF_2 = pd.DataFrame({"A": 2, "B": 4, "C": 6}, index=(1, 2, 3))
-#CONN = db.get_db_connection()
 
-example_queries = [
+EXAMPLE_QUERIES = [
     ("SELECT * FROM tbl UPDATE WHERE id=1", False),
     ("DROP TABLE [IF EXISTS]", False),
     ("DELETE FROM table_name WHERE condition", False),
@@ -28,15 +28,24 @@ example_queries = [
 ]
 
 
-@pytest.mark.parametrize("qry, is_permitted", example_queries)
+@pytest.mark.parametrize("qry, is_permitted", EXAMPLE_QUERIES)
 def test_update_query_raises_NonPermittedQuery(qry, is_permitted):
+    """
+    Test passes if the custom exception
+    NonPermittedQuery is raised when passing a 
+    qry flagged as 'is_permitted=False'
+    """
     if not is_permitted:
         with pytest.raises(db.NonPermittedQuery):
             db.run_sql_select_query(qry)
 
 
-@pytest.mark.parametrize("qry, is_permitted", example_queries)
+@pytest.mark.parametrize("qry, is_permitted", EXAMPLE_QUERIES)
 def test_NonPermittedQuery_status(qry, is_permitted):
+    """
+    Test that the is_permitted function
+    returns the expected TRUE/FALSE
+    """
     expected = is_permitted
     actual = db.is_permitted_query(qry)
     assert expected == actual
@@ -54,5 +63,3 @@ def test_run_sql_select_query_returns_df(connection=None):
 
     df = pd.read_sql(qry, connection)
     assert isinstance(df, pd.DataFrame)
-
-test_run_sql_select_query_returns_df() 

@@ -8,7 +8,23 @@ import os
 # External library imports
 import pyodbc
 
+# EXCEPTIONS
+class DBConnectionFailed(Exception):
+    def __init__(self, *args):
+        if args:
+            self.message = args[0]
+        else:
+            self.message = None
 
+    def __str__(self):
+        if self.message:
+            return "DBConnectionFailed, {0} ".format(self.message)
+        else:
+            return """Ensure that all connection parameters in the
+                    config.ini at the root of the project are present
+                    and correct, and that the databse is running."""
+
+# DECORATORS
 def provide_db_connection(func):
     """
     Decorator which creates aq db connection object
@@ -26,6 +42,7 @@ def provide_db_connection(func):
     return wrapper_provide_db_connection
 
 
+# FUNCTIONS
 def get_db_connection_string() -> str:
     """
     Builds a database connection string using the configuration
@@ -56,9 +73,6 @@ def get_db_connection():
     try:
         sql_conn = pyodbc.connect(sql_conn_str)
     except Exception as e:
-        raise Exception(
-            f'Error "{e}" connecting to database. Check your connection parameters in config.ini and try again.'
-        )
-
+        raise DBConnectionFailed
     return sql_conn
 

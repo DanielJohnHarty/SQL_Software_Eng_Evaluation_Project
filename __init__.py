@@ -8,12 +8,13 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
 # Local Imports
-import DSTI_db_interface.dependency_installation as di
+import DSTI_db_interface.dependency_installation as dependency_installation
 import DSTI_db_interface.db_api as db_api
-import DSTI_db_interface.db_connection as db_conn
+import DSTI_db_interface.db_connection as db_connection
+import DSTI_db_interface.queries_and_dynamic_queries as queries_and_dynamic_queries
 
 # Install any missing dependencies
-di.install_dependencies()
+dependency_installation.install_dependencies()
 
 
 PROJECT_NAME = 'DSTI_db_interface'

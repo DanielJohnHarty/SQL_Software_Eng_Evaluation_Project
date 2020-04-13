@@ -19,7 +19,7 @@ def test_install_dependencies_as_import():
     installation deosn't raise an exception
     """
     # Local Imports
-    import DSTI_db_interface.dependency_installation as di
+    import DSTI_db_interface.dependency_installation as di 
 
 
 def test_install_dependencies_as_script():

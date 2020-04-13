@@ -5,6 +5,7 @@ import os
 
 # Local Imports
 from .db_connection import provide_db_connection
+from .queries_and_dynamic_queries import get_dynamic_query_to_update_vw_AllSurveyData
 
 # External library imports
 import pandas as pd
@@ -32,92 +33,6 @@ CHECKPOINT_PATH = os.path.join(
     os.path.join(os.path.dirname(__file__)), "data", "survey_data_last_checkpoint.txt",
 )
 
-AllSurveyData_QRY = """
-
-                            SELECT
-                                    UserId
-                                    , 1 as SurveyId
-                                    , 
-                            COALESCE(
-                                (
-                                    SELECT a.Answer_Value
-                                    FROM Answer as a
-                                    WHERE
-                                        a.UserId = u.UserId
-                                        AND a.SurveyId = 1
-                                        AND a.QuestionId = 1
-                                ), -1) AS ANS_Q1  , 
-                            COALESCE(
-                                (
-                                    SELECT a.Answer_Value
-                                    FROM Answer as a
-                                    WHERE
-                                        a.UserId = u.UserId
-                                        AND a.SurveyId = 1
-                                        AND a.QuestionId = 2
-                                ), -1) AS ANS_Q2  ,  NULL AS ANS_Q3  ,  NULL AS ANS_Q4 
-                            FROM
-                                [User] as u
-                            WHERE EXISTS
-                            (
-                                    SELECT *
-                                    FROM Answer as a
-                                    WHERE u.UserId = a.UserId
-                                    AND a.SurveyId = 1
-                            )
-                            UNION 
-                            SELECT
-                                    UserId
-                                    , 2 as SurveyId
-                                    ,  NULL AS ANS_Q1  , 
-                            COALESCE(
-                                (
-                                    SELECT a.Answer_Value
-                                    FROM Answer as a
-                                    WHERE
-                                        a.UserId = u.UserId
-                                        AND a.SurveyId = 2
-                                        AND a.QuestionId = 2
-                                ), -1) AS ANS_Q2  , 
-                            COALESCE(
-                                (
-                                    SELECT a.Answer_Value
-                                    FROM Answer as a
-                                    WHERE
-                                        a.UserId = u.UserId
-                                        AND a.SurveyId = 2
-                                        AND a.QuestionId = 3
-                                ), -1) AS ANS_Q3  ,  NULL AS ANS_Q4 
-                            FROM
-                                [User] as u
-                            WHERE EXISTS
-                            (
-                                    SELECT *
-                                    FROM Answer as a
-                                    WHERE u.UserId = a.UserId
-                                    AND a.SurveyId = 2
-                            )
-                            UNION 
-                            SELECT
-                                    UserId
-                                    , 3 as SurveyId
-                                    ,  NULL AS ANS_Q1  ,  NULL AS ANS_Q2  ,  NULL AS ANS_Q3  ,  NULL AS ANS_Q4 
-                            FROM
-                                [User] as u
-                            WHERE EXISTS
-                            (
-                                    SELECT *
-                                    FROM Answer as a
-                                    WHERE u.UserId = a.UserId
-                                    AND a.SurveyId = 3
-                            )
-                                
-"""
-
-create_vw_AllSurveyData_qry = f"""
-                CREATE VIEW [dbo].[vw_AllSurveyData] AS 
-                    {AllSurveyData_QRY}
-"""
 
 # FUNCTIONS
 def is_permitted_query(qry:str)-> bool:
@@ -254,8 +169,12 @@ def get_all_survey_data() -> pd.DataFrame:
     obsolecence of data in the vw_AllSurveyData view.
     """
     # Latest data from live DB tables
+    qry = get_dynamic_query_to_update_vw_AllSurveyData()
+
+    # ORDER BY essential to ensure same hash even if 
+    # the order of teh result set is different
     live_survey_data = \
-        run_sql_select_query(f"{AllSurveyData_QRY} ORDER BY UserId")
+        run_sql_select_query(f"{qry} ORDER BY UserId")
 
     # Run code to check if the last time this was ran, if the 
     # data has changed. If yes, the vw_AllSurveyData is updated.
@@ -298,44 +217,8 @@ def create_vw_AllSurveyData(connection=None):
     @provide_db_connection provides db connection object
     and closes it after the function completes
     """
-    cur = connection.execute(create_vw_AllSurveyData_qry)
+    qry = get_dynamic_query_to_update_vw_AllSurveyData()
+    cur = connection.execute(qry)
     cur.commit()
     cur.close()
 
-
-@provide_db_connection
-def trg_refreshSurveyView(connection=None):
-    """
-    Updates [dbo].[vw_AllSurveyData] view with latest data (always fresh)
-
-    @provide_db_connection provides db connection object
-    and closes it after the function completes
-    """
-    pass
-
-
-def persist_survey_structure(df: pd.DataFrame, results_name: str) -> None:
-    """
-    Saves a Pandas dataframe locally as a csv with a
-    filename composed of [df_checksum_string]_[results_name].csv.
-    """
-    pass
-
-
-def generate_checksum_from_dataframe(df: pd.DataFrame) -> str:
-    """
-    Generate a checksum representing the contents of a
-    Pandas dataframe. Returns a string representation of the checksum.
-    """
-    pass
-
-
-def freshen_csv():
-    """
-    The local csv, may or may not be up to date. We don't know!
-    So this here proceedure gonna select all yo mutha fuckin 
-    shit from SurveyStructure table y'all. An if dat shit gotta 
-    different stank t yo old SurveyStructure,
-    we gonna update yo csv and yo [dbo].[vw_AllSurveyData] view.
-    """
-    pass

@@ -39,3 +39,10 @@ def test_get_db_connection_returns_pyodbc_Connection():
     """
     conn = dbconn.get_db_connection()
     assert isinstance(conn, pyodbc.Connection)
+
+def test_project_root_in_path():
+    """
+    Ensure that the project root has been correctly added
+    to the Python import path sys.path
+    """
+    assert PROJECT_ROOT in sys.path

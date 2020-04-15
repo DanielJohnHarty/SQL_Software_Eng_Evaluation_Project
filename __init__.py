@@ -13,7 +13,7 @@ import DSTI_db_interface.db_api as db_api
 import DSTI_db_interface.db_connection as db_connection
 import DSTI_db_interface.queries_and_dynamic_queries as queries_and_dynamic_queries
 
-# Install any missing dependencies
+# Install any missing dependencies for import
 dependency_installation.install_dependencies()
 
 
@@ -21,7 +21,8 @@ PROJECT_NAME = "DSTI_db_interface"
 
 if __name__ == "__main__":
 
-    # Run main.py
-    main_file_pth = os.path.join(os.path.dirname(__file__), PROJECT_NAME, "main.py")
+    # Run as command line app
+    app_file_pth = os.path.join(os.path.dirname(__file__), PROJECT_NAME, "Scripts", "app.py")
 
-    subprocess.check_call([sys.executable, main_file_pth])
+    subprocess.check_call([sys.executable, app_file_pth])
+

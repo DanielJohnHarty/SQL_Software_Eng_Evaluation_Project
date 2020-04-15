@@ -40,3 +40,10 @@ def test_requirements_txt_at_project_root():
     requirements_ok = os.path.exists(os.path.join(PROJECT_ROOT, "requirements.txt"))
 
     assert requirements_ok is True
+
+def test_project_root_in_path():
+    """
+    Ensure that the project root has been correctly added
+    to the Python import path sys.path
+    """
+    assert PROJECT_ROOT in sys.path

@@ -139,7 +139,7 @@ def update_vw_AllSurveyData_if_obsolete(live_survey_data: pd.DataFrame = None) -
     stdout_vw_AllSurveyData_actions(obsolete, checkpoint_hash, live_survey_data_hash)
 
 
-def stdout_vw_AllSurveyData_actions(obsolete, checkpoint_hash, live_survey_data_hash):
+def stdout_vw_AllSurveyData_actions(obsolete, checkpoint_hash, live_survey_data_hash)->str:
     if obsolete:
         print(
             f"vw_AllSurveyData data obsolete. Updating checkpoint: {checkpoint_hash} -> {live_survey_data_hash}"
@@ -206,7 +206,7 @@ def get_dataframe_hash_id(df: pd.DataFrame) -> str:
 
 
 @provide_db_connection
-def drop_vw_AllSurveyData(connection=None):
+def drop_vw_AllSurveyData(connection=None)->None:
     """
     @provide_db_connection provides db connection object
     and closes it after the function completes
@@ -218,7 +218,7 @@ def drop_vw_AllSurveyData(connection=None):
 
 
 @provide_db_connection
-def create_vw_AllSurveyData(connection=None):
+def create_vw_AllSurveyData(connection=None)->None:
     """
     @provide_db_connection provides db connection object
     and closes it after the function completes

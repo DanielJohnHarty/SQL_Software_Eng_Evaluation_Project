@@ -15,9 +15,6 @@ import DSTI_db_interface.cli_user_interface as cli_user_interface
 import pytest
 
 # SHARED_VARIABLES
-# DF_1 = pd.DataFrame({"A": 1, "B": 2, "C": 3}, index=(1, 2, 3))
-# DF_2 = pd.DataFrame({"A": 2, "B": 4, "C": 6}, index=(1, 2, 3))
-
 
 def test_instantiate_cli():
     """

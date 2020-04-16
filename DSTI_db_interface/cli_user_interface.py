@@ -1,5 +1,6 @@
 # Standard Library Imports
 import os
+import signal
 import sys
 
 
@@ -30,6 +31,10 @@ class UserCLI:
             "4": (self.exit, "Exit"),
         }
 
+
+
+
+    def run_cli_app(self):
         self.text_intro()
         self.application_loop()
         self.exit()
@@ -78,15 +83,60 @@ class UserCLI:
 
     def run_select_query(self, SELECT_query=None, save_file_path=None):
         
+        query_source = None
+        while not query_source:
+            print(f"Choose SELECT query source:\n" + 
+                f"{UserCLI.SMALL_INDENT}{UserCLI.BULLET_POINT}[1] Load SELECT query from a txt file\n" +
+                f"{UserCLI.SMALL_INDENT}{UserCLI.BULLET_POINT}[2] Input SELECT query on the command line"
+                )
+
+            query_source = input()
+            
+            if not query_source in ['1','2']:
+                print("\nI didn't quite catch that...\n")
+                query_source = None
+
+
         while not SELECT_query:
-            qry = input()
-            if not db.is_permitted_query(qry):
-                print('Only SELECT queries are permitted. Please try again.\n\n')
-                continue
-            else:
-                SELECT_query = qry
-                break
+
+            qry = ''
+
+            if query_source == '1':
+                while qry == '':
+                    print("Please enter the filepath of the text file with your SELECT query")#load txt file
+                    filepath = input()
+                    file_exists = os.path.exists(filepath)
+                    is_txtfile = filepath.endswith('.txt')
+                    if file_exists and is_txtfile:
+                        try:
+                            with open(filepath, 'r') as file:
+                                qry = file.read()
+                                if not db.is_permitted_query(qry):
+                                    print('Only SELECT queries are permitted. Please try again.\n\n')
+                                    continue
+                                else:
+                                    SELECT_query = qry
+                        except Exception as e:
+                            print(e)
+                            qry = ''
+
+
+
+            elif query_source == '2':
+                while qry == '':
+                    print("\nEnter your SELECT query...")
+                    qry = input()
+                    if not db.is_permitted_query(qry):
+                        print('Only SELECT queries are permitted. Please try again.\n\n')
+                        qry == ''
+                        continue
+                    else:
+                        SELECT_query = qry
+                        break
+
         
+            else:
+                print("xxx")
         results = db.run_sql_select_query(SELECT_query)
 
 
@@ -101,7 +151,7 @@ class UserCLI:
                 break
             else:
                 print(
-                    "Double check that the directory exists"
+                    "Double check that the directory exists "
                     + "and that the target filename is valid,"
                     + ' ending with ".csv"\n'
                 )
@@ -109,7 +159,8 @@ class UserCLI:
         
         results.to_csv(save_file_path)
 
-        results_summary = f'\nQuery\n {SELECT_query}\n results saved to\n {save_file_path}'
+        results_summary = f'\nQuery\n\n{SELECT_query}\n\nResults saved to\n{save_file_path}\n\n'
+        print(results_summary)
 
         self.application_loop()
 
@@ -138,12 +189,25 @@ class UserCLI:
                     + ' ending with ".csv"\n'
                 )
                 continue
+        
+        update_view = None
 
-        print("\nYou want to update vw_AllSurveyData too?\n")
-        if "y" in input().lower():
-            update_view = True
-        else:
-            update_view = False
+
+        print("\nYou want to update vw_AllSurveyData too? [y/n]\n")
+        while update_view is not False and update_view is not True:
+            user_selection = input()
+            if user_selection == "y":
+                update_view = True
+                print('OK, UPDATING vw_AllSurveyData...')
+
+            elif user_selection =="n":
+                update_view = False
+                print('OK, NOT UPDATING vw_AllSurveyData...')
+
+            else:
+                print("\nI didn't quite get that.\nYou want to update vw_AllSurveyData too? [y/n]\n")
+
+
         print('\n')
         all_survey_data = db.get_all_survey_data(update_view=update_view)
 

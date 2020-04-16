@@ -21,8 +21,11 @@ PROJECT_NAME = "DSTI_db_interface"
 
 if __name__ == "__main__":
 
-    # Run as command line app
-    app_file_pth = os.path.join(os.path.dirname(__file__), PROJECT_NAME, "Scripts", "app.py")
 
-    subprocess.check_call([sys.executable, app_file_pth])
 
+    try:
+        # Run as command line app
+        app_file_pth = os.path.join(os.path.dirname(__file__), PROJECT_NAME, "Scripts", "app.py")
+        subprocess.check_call([sys.executable, app_file_pth])
+    except KeyboardInterrupt:
+        pass

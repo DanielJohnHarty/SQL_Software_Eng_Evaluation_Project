@@ -11,6 +11,16 @@ sys.path.insert(0, PROJECT_ROOT)
 import DSTI_db_interface.cli_user_interface as cli
 
 # 3rd party packages
-# import pyodbc
+
 
 app = cli.UserCLI()
+
+if __name__=='__main__':
+
+
+    try:
+        app.run_cli_app()
+    except KeyboardInterrupt:
+        print("")
+    finally:
+        app.exit()

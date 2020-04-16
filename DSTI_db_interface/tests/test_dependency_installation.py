@@ -22,16 +22,6 @@ def test_install_dependencies_as_import():
     import DSTI_db_interface.dependency_installation as di
 
 
-def test_install_dependencies_as_script():
-    """
-    Test that when module is imported, dependency
-    installation deosn't raise an exception
-    """
-    run_as_script_pth = os.path.join(PROJECT_ROOT, "__init__.py")
-
-    subprocess.check_call([sys.executable, run_as_script_pth])
-
-
 def test_requirements_txt_at_project_root():
     """
     Test returns false if requirements.txt is not
@@ -40,6 +30,7 @@ def test_requirements_txt_at_project_root():
     requirements_ok = os.path.exists(os.path.join(PROJECT_ROOT, "requirements.txt"))
 
     assert requirements_ok is True
+
 
 def test_project_root_in_path():
     """

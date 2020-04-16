@@ -20,7 +20,6 @@ class NonPermittedQuery(Exception):
             self.message = None
 
     def __str__(self):
-        # print('calling str')
         if self.message:
             return "NonPermittedQuery, {0} ".format(self.message)
         else:
@@ -35,13 +34,19 @@ CHECKPOINT_PATH = os.path.join(
 
 
 # FUNCTIONS
-def is_permitted_query(qry: str) -> bool:
+def is_non_empty_select_query(qry: str) -> bool:
     """
     Returns False if any flag from the 
     non_permitted_query_flags iterable are present
     in the passed query
     """
-    non_permitted_query_flags = ("update", "drop", "delete", "create", "alter")
+    non_permitted_query_flags = (
+        "update",
+        "drop table",
+        "delete",
+        "create table",
+        "alter table",
+    )
 
     qry = qry.lower()
 
@@ -63,12 +68,27 @@ def run_sql_select_query(sql_query=None, connection=None) -> pd.DataFrame:
 
     Returns a pandas dataframe.
     """
-    if not is_permitted_query(sql_query):
+    if not is_non_empty_select_query(sql_query):
         raise NonPermittedQuery
 
-    elif sql_query and connection:
-        df = pd.read_sql(sql_query, connection)
-        return df
+    create_view = "create view" in sql_query.lower()
+    alter_view = "alter view" in sql_query.lower()
+
+    if sql_query and connection:
+        try:
+            if create_view or alter_view:
+                cur = connection.execute(sql_query)
+                cur.commit()
+                cur.close()
+                return None
+
+            else:
+                df = pd.read_sql(sql_query, connection)
+                return df
+        except Exception as e:
+            print(f"There seems to be a problem. The query wasn't executed correctly\n")
+            print(f"The following error occured:\n{e}\n")
+            print("Sorry about it...")
 
 
 def create_checkpoint_file():
@@ -139,7 +159,9 @@ def update_vw_AllSurveyData_if_obsolete(live_survey_data: pd.DataFrame = None) -
     stdout_vw_AllSurveyData_actions(obsolete, checkpoint_hash, live_survey_data_hash)
 
 
-def stdout_vw_AllSurveyData_actions(obsolete, checkpoint_hash, live_survey_data_hash):
+def stdout_vw_AllSurveyData_actions(
+    obsolete, checkpoint_hash, live_survey_data_hash
+) -> str:
     if obsolete:
         print(
             f"vw_AllSurveyData data obsolete. Updating checkpoint: {checkpoint_hash} -> {live_survey_data_hash}"
@@ -206,7 +228,7 @@ def get_dataframe_hash_id(df: pd.DataFrame) -> str:
 
 
 @provide_db_connection
-def drop_vw_AllSurveyData(connection=None):
+def drop_vw_AllSurveyData(connection=None) -> None:
     """
     @provide_db_connection provides db connection object
     and closes it after the function completes
@@ -218,7 +240,7 @@ def drop_vw_AllSurveyData(connection=None):
 
 
 @provide_db_connection
-def create_vw_AllSurveyData(connection=None):
+def create_vw_AllSurveyData(connection=None) -> None:
     """
     @provide_db_connection provides db connection object
     and closes it after the function completes

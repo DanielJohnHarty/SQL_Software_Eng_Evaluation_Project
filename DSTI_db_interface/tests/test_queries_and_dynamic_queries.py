@@ -58,3 +58,11 @@ functions_returning_lists = [(q.get_survey_ids), (q.get_question_ids)]
 def test_get_survey_ids_returns_list(func):
     returned_object = func()
     assert isinstance(returned_object, list)
+
+
+def test_project_root_in_path():
+    """
+    Ensure that the project root has been correctly added
+    to the Python import path sys.path
+    """
+    assert PROJECT_ROOT in sys.path

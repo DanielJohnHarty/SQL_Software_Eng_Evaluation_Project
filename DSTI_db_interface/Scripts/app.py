@@ -20,7 +20,9 @@ if __name__=='__main__':
 
     try:
         app.run_cli_app()
-    except KeyboardInterrupt:
-        print("")
+    # except KeyboardInterrupt:
+    #     print("")
+    except Exception as e:
+        print(e)
     finally:
         app.exit()

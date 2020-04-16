@@ -1,4 +1,5 @@
 # Standard Library Imports
+import functools
 import os
 import signal
 import sys
@@ -9,7 +10,18 @@ import DSTI_db_interface.db_api as db
 
 # import DSTI_db_interface.db_connection as db_conn
 import DSTI_db_interface.dependency_installation as di
+import DSTI_db_interface.file_utilities as futils
 
+
+# DECORATORS
+def _delineate_stdout(func):
+    
+    @functools.wraps(func)
+    def wrapped_func(*args, **kwargs) :
+        print(f"{UserCLI.SIMPLE_LINE}\n")
+        func(*args, **kwargs )
+        print(f"{UserCLI.SIMPLE_LINE}\n")
+    return wrapped_func
 
 class UserCLI:
 
@@ -24,28 +36,75 @@ class UserCLI:
 
     def __init__(self):
 
-        self.function_mapper = {
-            "1": (self.download_all_survey_data, "Download vw_AllSurveyData"),
-            "2": (self.update_vw_AllSurveyData, "Update vw_AllSurveyData"),
-            "3": (self.run_select_query, "Run Custom SELECT Query"),
-            "4": (self.exit, "Exit"),
-        }
+        print("\n\n\n") # Clear some space in the stdout
+        self.feature_map = self.get_cli_feature_map()
 
 
+
+
+
+
+    def get_cli_feature_map(self)->dict:
+        """
+        The features presented to the user as menu options
+        when using this cli are defined in the function_mapper
+        dict in this function, and returned to 
+        the caller as 3 iterables: index, function and description.
+        """
+
+        # index :(function, function_description)
+        function_mapper = {
+                "1": (self.download_all_survey_data, "Download vw_AllSurveyData"),
+                "2": (self.update_vw_AllSurveyData, "Update vw_AllSurveyData"),
+                "3": (self.run_select_query, "Run Custom SELECT Query"),
+                "4": (self.exit, "Exit"),
+            }
+        
+
+
+        return function_mapper
+
+    def get_cli_features_options_and_descriptions(self):
+
+        feature_indicies = self.feature_map.keys()
+        feature_descriptions = [v[1] for v in self.feature_map.values()]
+        #functions = [v[0] for v in self.feature_map.values()]
+
+        return feature_indicies, feature_descriptions
+
+    def get_user_input(self, option_index, option_description):
+        """
+        Prints valid inputs and gets user slection
+        """
+        user_selection = None
+        while not user_selection: 
+            for i, desc in zip(option_index, option_description):
+                print(f'{UserCLI.SMALL_INDENT}{i} -> {desc}')
+            
+            print('\n')
+            user_input = input()
+            
+            if not user_input in option_index:
+                print(f"\n{UserCLI.SMALL_INDENT} Sorry, I didn't quite catch that...\n Your options are:\n")
+                user_selection = None
+            else:
+                user_selection = user_input
+
+        return user_selection
 
 
     def run_cli_app(self):
         self.text_intro()
         self.application_loop()
-        self.exit()
+        #self.exit()
 
+    
     def text_intro(self):
-        print("\n\n\n")
+        print("\n\n")
         print(
             f"{UserCLI.BOLD_LINE}\n"
             + f"{UserCLI.APP_NAME} v{UserCLI.VERSION}\n"
-            + f"{UserCLI.SIMPLE_LINE}\n"
-        )
+            )
 
 
     def text_outro(self):
@@ -58,22 +117,11 @@ class UserCLI:
         )
 
     def application_loop(self):
-        self.print_display_menu_options()
-        print("Select function as int e.g. type 4 to exit\n\n")
-        self.display_menu_options()
 
-        choice = input()
-        while choice not in self.function_mapper:
-            print(
-                "That choice wasn't found.\n"
-                + "The options are:\n\n"
-                + self.display_menu_options()
-            )
-
-            choice = input()
-
+        print("Select function as int e.g. type 4 to exit\n")
+        opts, descs = self.get_cli_features_options_and_descriptions()
+        choice = self.get_user_input(opts, descs)
         function, function_desc = self.get_function_and_desc_from_choice(choice)
-
         print(f"\n{function_desc} selected...\n")
         function()
 
@@ -81,134 +129,82 @@ class UserCLI:
         self.text_outro()
         sys.exit()
 
+    @_delineate_stdout
     def run_select_query(self, SELECT_query=None, save_file_path=None):
         
-        query_source = None
-        while not query_source:
-            print(f"Choose SELECT query source:\n" + 
-                f"{UserCLI.SMALL_INDENT}{UserCLI.BULLET_POINT}[1] Load SELECT query from a txt file\n" +
-                f"{UserCLI.SMALL_INDENT}{UserCLI.BULLET_POINT}[2] Input SELECT query on the command line"
-                )
-
-            query_source = input()
-            
-            if not query_source in ['1','2']:
-                print("\nI didn't quite catch that...\n")
-                query_source = None
-
-
-        while not SELECT_query:
-
-            qry = ''
-
-            if query_source == '1':
-                while qry == '':
-                    print("Please enter the filepath of the text file with your SELECT query")#load txt file
-                    filepath = input()
-                    file_exists = os.path.exists(filepath)
-                    is_txtfile = filepath.endswith('.txt')
-                    if file_exists and is_txtfile:
-                        try:
-                            with open(filepath, 'r') as file:
-                                qry = file.read()
-                                if not db.is_permitted_query(qry):
-                                    print('Only SELECT queries are permitted. Please try again.\n\n')
-                                    continue
-                                else:
-                                    SELECT_query = qry
-                        except Exception as e:
-                            print(e)
-                            qry = ''
-
-
-
-            elif query_source == '2':
-                while qry == '':
-                    print("\nEnter your SELECT query...")
-                    qry = input()
-                    if not db.is_permitted_query(qry):
-                        print('Only SELECT queries are permitted. Please try again.\n\n')
-                        qry == ''
-                        continue
-                    else:
-                        SELECT_query = qry
-                        break
-
         
-            else:
-                print("xxx")
+        while not SELECT_query: 
+
+            print(f"Choose SELECT query source:\n")
+
+            opts = ['1','2']
+            descs = [f"Load SELECT query from a txt file",
+                     f"Input SELECT query on the command line"]
+
+            user_selection = self.get_user_input(opts, descs)
+
+
+            if user_selection == '1': # Load from text file
+                
+                print("\nOK, loading query from local text file...\n")
+                query_txt_filepath = futils.get_user_text_file()
+                qry = futils.get_sql_from_text_file_as_text(query_txt_filepath)
+
+                if db.is_non_empty_select_query(qry):
+                    SELECT_query = qry
+                else:
+                    print(f"\nYour query doesn't seem to be quite right:\n")
+                    print(qry+'\n')
+        
+            if user_selection == '2': # Write query in cli
+                print("\nOK, enter your query on to a single line:\n")
+                qry = input()
+                
+                # A permitted query may still be incorrect SQL (change to is_non_empty_select_query)
+                if db.is_non_empty_select_query(qry):
+                    SELECT_query = qry
+
+                else:
+                    print(f"\nYour query doesn't seem to be quite right:\n")
+                    print(qry+'\n')
+
+
+
         results = db.run_sql_select_query(SELECT_query)
 
-
-        while not save_file_path:
-            print("\nEnter a local path for saving the csv file\n")
-            user_input_fullpath = input().lower()
-            directory_exists = os.path.exists(os.path.dirname(user_input_fullpath))
-            is_csv = user_input_fullpath.endswith(".csv")
-
-            if directory_exists and is_csv:
-                save_file_path = user_input_fullpath
-                break
-            else:
-                print(
-                    "Double check that the directory exists "
-                    + "and that the target filename is valid,"
-                    + ' ending with ".csv"\n'
-                )
-                continue
+        save_file_path = futils.get_target_filepath_to_save('.csv')
         
         results.to_csv(save_file_path)
 
-        results_summary = f'\nQuery\n\n{SELECT_query}\n\nResults saved to\n{save_file_path}\n\n'
+        results_summary = f'\nExecuted Query:\n\n{SELECT_query}\n\nResults saved to\n{save_file_path}\n\n'
+        
         print(results_summary)
 
         self.application_loop()
 
-
+    @_delineate_stdout
     def update_vw_AllSurveyData(self):
+        
         db.update_vw_AllSurveyData_if_obsolete()
         print('\n')
         self.application_loop()
 
         self.application_loop()
 
+    @_delineate_stdout
     def download_all_survey_data(self, save_file_path=None):
-        while not save_file_path:
-            print("Enter a local path for saving the csv file\n")
-            user_input_fullpath = input().lower()
-            directory_exists = os.path.exists(os.path.dirname(user_input_fullpath))
-            is_csv = user_input_fullpath.endswith(".csv")
 
-            if directory_exists and is_csv:
-                save_file_path = user_input_fullpath
-                break
-            else:
-                print(
-                    "Double check that the directory exists"
-                    + "and that the target filename is valid,"
-                    + ' ending with ".csv"\n'
-                )
-                continue
+        save_file_path = futils.get_target_filepath_to_save('csv')
         
-        update_view = None
-
 
         print("\nYou want to update vw_AllSurveyData too? [y/n]\n")
-        while update_view is not False and update_view is not True:
-            user_selection = input()
-            if user_selection == "y":
-                update_view = True
-                print('OK, UPDATING vw_AllSurveyData...')
+        
+        update_view = \
+            self.get_user_input(['y','n'] ,
+                                ['Yes, update vw_AllSurveyData',"No, don't bother"])
+        
+        update_view = True if update_view == 'y' else False
 
-            elif user_selection =="n":
-                update_view = False
-                print('OK, NOT UPDATING vw_AllSurveyData...')
-
-            else:
-                print("\nI didn't quite get that.\nYou want to update vw_AllSurveyData too? [y/n]\n")
-
-
-        print('\n')
         all_survey_data = db.get_all_survey_data(update_view=update_view)
 
         try:
@@ -226,23 +222,12 @@ class UserCLI:
 
             self.application_loop()
 
-
     def print_display_menu_options(self):
         print('Choose operation:\n')
         print(self.display_menu_options())
 
-    def get_function_and_desc_from_choice(self, choice: int):
-        function, function_desc = self.function_mapper[choice]
-
+    def get_function_and_desc_from_choice(self, choice: str):
+        function, function_desc = self.feature_map[choice]
         return function, function_desc
 
-    def display_menu_options(self):
 
-        disp_options_str = ""
-        for option_number, func_desc_tuple in self.function_mapper.items():
-            _, function_desc = func_desc_tuple[0], func_desc_tuple[1]
-            disp_options_str += (
-                f"{UserCLI.SMALL_INDENT}{option_number} - {function_desc}\n"
-            )
-
-        return disp_options_str

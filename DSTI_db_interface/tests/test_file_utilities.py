@@ -12,6 +12,7 @@ import DSTI_db_interface.file_utilities as futil
 
 # 3rd party packages
 import pytest
+from unittest import mock
 
 # SHARED_VARIABLES
 
@@ -40,3 +41,28 @@ def test_permitted_file_name(filename, is_permitted):
     expected = is_permitted
     actual = futil.is_permitted_filename(filename)
     assert expected == actual
+
+
+EXAMPLE_FILEPATHS = [
+    ("C:\\This\\file\\doesnt\\exist\\file.txt", False),
+    ("C:\\This\\file\\can't\\exist\\file.txt", False),
+    ("C:\\This\\file\\is\\a\\directory", False),
+    ("/This/is/a/linux/path/file.txt", True),
+]
+@pytest.mark.parametrize("filepath, exists", EXAMPLE_FILEPATHS)
+def test_is_valid_read_filepath(filepath, exists):
+
+    with mock.patch('os.path.exists',return_value=exists) as mocked_exists:
+        expected = exists
+        actual = futil.is_valid_read_filepath(filepath)
+        assert expected == actual
+
+@pytest.mark.parametrize("filepath, exists", EXAMPLE_FILEPATHS)
+def test_is_valid_write_filepath(filepath, exists):
+
+    with mock.patch('os.path.exists',return_value=exists) as mocked_exists:
+        expected = exists
+        actual = futil.is_valid_write_filepath(filepath)
+        assert expected == actual
+
+

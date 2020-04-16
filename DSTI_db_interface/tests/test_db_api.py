@@ -47,7 +47,7 @@ def test_NonPermittedQuery_status(qry, is_permitted):
     returns the expected TRUE/FALSE
     """
     expected = is_permitted
-    actual = db.is_permitted_query(qry)
+    actual = db.is_non_empty_select_query(qry)
     assert expected == actual
 
 

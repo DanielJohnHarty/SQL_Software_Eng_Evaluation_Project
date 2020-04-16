@@ -35,7 +35,7 @@ CHECKPOINT_PATH = os.path.join(
 
 
 # FUNCTIONS
-def is_permitted_query(qry: str) -> bool:
+def is_non_empty_select_query(qry: str) -> bool:
     """
     Returns False if any flag from the 
     non_permitted_query_flags iterable are present
@@ -63,7 +63,7 @@ def run_sql_select_query(sql_query=None, connection=None) -> pd.DataFrame:
 
     Returns a pandas dataframe.
     """
-    if not is_permitted_query(sql_query):
+    if not is_non_empty_select_query(sql_query):
         raise NonPermittedQuery
 
     elif sql_query and connection:

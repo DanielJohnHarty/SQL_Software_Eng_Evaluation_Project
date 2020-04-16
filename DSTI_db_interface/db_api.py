@@ -40,7 +40,7 @@ def is_non_empty_select_query(qry: str) -> bool:
     non_permitted_query_flags iterable are present
     in the passed query
     """
-    non_permitted_query_flags = ("update", "drop", "delete", "create", "alter")
+    non_permitted_query_flags = ("update", "drop table", "delete", "create table", "alter table")
 
     qry = qry.lower()
 
@@ -66,8 +66,14 @@ def run_sql_select_query(sql_query=None, connection=None) -> pd.DataFrame:
         raise NonPermittedQuery
 
     elif sql_query and connection:
-        df = pd.read_sql(sql_query, connection)
-        return df
+        try:
+            df = pd.read_sql(sql_query, connection)
+            return df
+        except Exception as e:
+            print(f"There seems to be a problem. The query wasn't executed correctly\n")
+            print(f"The following error occured:\n{e}\n")
+            print("Sorry about it...")
+
 
 
 def create_checkpoint_file():

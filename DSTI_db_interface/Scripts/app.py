@@ -22,4 +22,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"An error occured. Sorry about it.\n")
         print(f"Please report error:\n{e}\n...to your data engineer.")
-

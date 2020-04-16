@@ -49,20 +49,21 @@ EXAMPLE_FILEPATHS = [
     ("C:\\This\\file\\is\\a\\directory", False),
     ("/This/is/a/linux/path/file.txt", True),
 ]
+
+
 @pytest.mark.parametrize("filepath, exists", EXAMPLE_FILEPATHS)
 def test_is_valid_read_filepath(filepath, exists):
 
-    with mock.patch('os.path.exists',return_value=exists) as mocked_exists:
+    with mock.patch("os.path.exists", return_value=exists) as mocked_exists:
         expected = exists
         actual = futil.is_valid_read_filepath(filepath)
         assert expected == actual
 
+
 @pytest.mark.parametrize("filepath, exists", EXAMPLE_FILEPATHS)
 def test_is_valid_write_filepath(filepath, exists):
 
-    with mock.patch('os.path.exists',return_value=exists) as mocked_exists:
+    with mock.patch("os.path.exists", return_value=exists) as mocked_exists:
         expected = exists
         actual = futil.is_valid_write_filepath(filepath)
         assert expected == actual
-
-

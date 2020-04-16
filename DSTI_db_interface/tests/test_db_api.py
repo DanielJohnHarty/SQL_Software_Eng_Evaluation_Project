@@ -64,12 +64,12 @@ def test_run_sql_select_query_returns_df(connection=None):
     df = pd.read_sql(qry, connection)
     assert isinstance(df, pd.DataFrame)
 
+
 def test_project_root_in_path():
     """
     Ensure that the project root has been correctly added
     to the Python import path sys.path
     """
-    PROJECT_ROOT = \
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
     assert PROJECT_ROOT in sys.path

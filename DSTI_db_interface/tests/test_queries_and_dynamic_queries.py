@@ -59,6 +59,7 @@ def test_get_survey_ids_returns_list(func):
     returned_object = func()
     assert isinstance(returned_object, list)
 
+
 def test_project_root_in_path():
     """
     Ensure that the project root has been correctly added

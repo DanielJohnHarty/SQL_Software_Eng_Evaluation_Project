@@ -27,7 +27,6 @@ def _delineate_stdout(func):
     def wrapped_func(*args, **kwargs):
         print(f"{UserCLI.SIMPLE_LINE}\n")
         func(*args, **kwargs)
-        print(f"{UserCLI.SIMPLE_LINE}\n")
 
     return wrapped_func
 
@@ -116,7 +115,7 @@ class UserCLI:
         when using a CLI instance
         """
         print("\n\n")
-        print(f"{UserCLI.BOLD_LINE}\n" + f"{UserCLI.APP_NAME} v{UserCLI.VERSION}\n")
+        print(f"{UserCLI.BOLD_LINE}\n" + f"{UserCLI.APP_NAME} v{UserCLI.VERSION}")
 
     def text_outro(self):
         """
@@ -131,6 +130,7 @@ class UserCLI:
             + f"{UserCLI.SIMPLE_LINE}\n"
         )
 
+    @_delineate_stdout
     def application_cycle(self):
         """
         One iteration though the cycle of selecting
@@ -194,15 +194,26 @@ class UserCLI:
                     print(f"\nYour query doesn't seem to be quite right:\n")
                     print(qry + "\n")
 
-        results = db.run_sql_select_query(SELECT_query)
+        try:
 
-        save_file_path = futils.get_target_filepath_to_save(".csv")
+            results = db.run_sql_select_query(SELECT_query)
 
-        results.to_csv(save_file_path)
+            if any(results):
+                save_file_path = futils.get_target_filepath_to_save(".csv")
 
-        results_summary = f"\nExecuted Query:\n\n{SELECT_query}\n\nResults saved to\n{save_file_path}\n\n"
+                results.to_csv(save_file_path)
 
-        print(results_summary)
+                results_summary = f"\nExecuted Query:\n\n{SELECT_query}\n\nResults saved to\n{save_file_path}\n"
+                print(results_summary)
+            else:
+                results_summary = f"\nSuccessful query but no results retrieved\n"
+
+                print(results_summary)
+
+        except Exception as e:
+            print("The following error occured:\n")
+            print(e)
+            print("Sorry about it.")
 
         self.application_cycle()
 
